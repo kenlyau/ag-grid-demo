@@ -1,0 +1,14 @@
+<!doctype>
+<html>
+    <head><title>demo</title></head>
+    <body>
+        <h1>demo ext</h1>
+    <script>
+       document.addEventListener("keyup", (e) => {
+          console.log("ext keyup")
+          const evt = new KeyboardEvent("keyup", {key: e.key})
+          parent.window.document.dispatchEvent(evt)
+       })
+    </script>
+    </body>
+</html>
