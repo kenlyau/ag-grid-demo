@@ -1,14 +1,15 @@
-import React, {useState, useImperativeHandle, forwardRef} from "react"
+import React, {useImperativeHandle, forwardRef} from "react"
 
 const AgChkbox = forwardRef((props, ref) => {
-    
-    console.log("re", props) 
+
     const handler = (evt) => {        
         props.node.setSelected(!props.node.selected)
     }
     useImperativeHandle(ref, () => {
         return {
-            refresh: (params) => {} 
+            refresh: (params) => {
+                return true
+            } 
         }
     })
     return (

@@ -4,6 +4,7 @@ import {AgGridReact} from "ag-grid-react"
 import "ag-grid-community/dist/styles/ag-grid.css"
 import "ag-grid-community/dist/styles/ag-theme-balham.css"
 import AgChkbox from "./ag-chkbox"
+import AgFilter from "./ag-filter"
 
 const genRowData = () => {
     const cols = Array(55).fill(1).map(i => uuidv4())
@@ -35,17 +36,28 @@ const AgTable = () => {
          setGridApi(params.api)
          setGridColumnApi(params.columnApi)
     }
+    const handleFilter = (data) => {
+        console.log("handleFilter", data)
+    }
     useEffect(() => {
  	setTimeout(() => {
 	    const _rowData = genRowData()
             setRowData(_rowData)
-            const _columns = Object.keys(_rowData[0]).map(item => {
-                return {
+            const _columns = Object.keys(_rowData[0]).map((item, index) => {
+                const _column = {
                   field: item,
                   resizable: true,
                   sortable: true,
-                  filter: true
                 }
+                if (index % 2){
+                    _column.filterFramework = AgFilter
+                    _column.filterParams = {onChange: handleFilter}
+                }
+                if (index % 3) {
+                    _column.unSortIcon = true
+                }
+                console.log(_column)
+                return _column
             })
             const chkCol = {
                 field: "checkbox",
@@ -53,7 +65,7 @@ const AgTable = () => {
                 cellClass: "mykk",
                 headerCheckboxSelection: true,
                 checkboxSelection: true,
-                cellRendererFramework: AgChkbox 
+                cellRendererFramework: AgChkbox, 
            }
            setColumnDefs([chkCol,..._columns])
            console.log("rowdata", _rowData)
@@ -73,6 +85,7 @@ const AgTable = () => {
              onCellMouseDown={onCellMouseDown}
              onGridReady={onGridReady}
              columnDefs={columnDefs}
+             suppressMenuHide={true}
              suppressRowClickSelection={true}
           />
           </div>
