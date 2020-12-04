@@ -35,6 +35,10 @@ const AgTable = () => {
          window.agColumnApi = params.columnApi
          setGridApi(params.api)
          setGridColumnApi(params.columnApi)
+         params.api.gridCore.eRootWrapperBody.querySelector(".ag-center-cols-container").addEventListener("mousedown", e => {
+            console.log(999) 
+            e.stopPropagation()
+         })
     }
     const handleFilter = (data) => {
         console.log("handleFilter", data)
@@ -84,7 +88,10 @@ const AgTable = () => {
              onCellClicked={onCellClicked}
              onCellMouseDown={onCellMouseDown}
              onGridReady={onGridReady}
+             suppressCellSelection={true}
+             suppressRowClickSelection={true}
              columnDefs={columnDefs}
+             preventDefaultOnContextMenu={true}
              suppressMenuHide={true}
              suppressRowClickSelection={true}
           />
