@@ -9,7 +9,9 @@ import AgFilter from "./ag-filter"
 const genRowData = () => {
     const cols = Array(55).fill(1).map(i => uuidv4())
     const rows = Array(500).fill(1).map(i => {
-         const obj = {}
+         const obj = {
+            uid: uuidv4()
+         }
          cols.map(j => obj[j] = uuidv4())
          return obj
     })
@@ -20,8 +22,9 @@ const genRowData = () => {
 const AgTable = () => {
     const [rowData, setRowData] = useState([])
     const [columnDefs, setColumnDefs] = useState([])
-    const [gridApi, setGridApi] = useState()
-    const [gridColumnApi, setGridColumnApi] = useState()
+    
+    const gridApiRef = useRef()
+    const gridColumnApiRef = useRef()
     const eleRef = useRef()
     const onCellClicked = (e) => {
 	e.event.preventDefault()
@@ -30,21 +33,51 @@ const AgTable = () => {
     const onCellMouseDown = (e) => {
         console.log(e)
     }
+    const onRowDataUpdated = (row, a, b) => {
+        console.log(row, a, b)
+    }
     const onGridReady = (params) => {
          window.agApi = params.api
          window.agColumnApi = params.columnApi
-         setGridApi(params.api)
-         setGridColumnApi(params.columnApi)
+         gridApiRef.current = params.api
+         gridColumnApiRef.current = params.columnApi
          params.api.gridCore.eRootWrapperBody.querySelector(".ag-center-cols-container").addEventListener("mousedown", e => {
-            console.log(999) 
+            
             e.stopPropagation()
          })
+    }
+    const getAllRowNode = () => {
+        let arr = []
+        gridApiRef.current.forEachNode(i => arr.push(i))
+        return arr
+    }
+    const getCurrentRowNode = () => {
+        const rows = getAllRowNode()
+        return rows.find(row => row.data.current)
+    }
+
+    const setCurrentRowNode = (rowIndex) => {
+        const rows = getAllRowNode()
+        const updateRows = []
+        const current = rows.find(item => item.data.current)
+        if (current) {
+            updateRows.push(Object.assign({}, current.data, {current: false}))
+        }
+        const next = rows.find(item => item.rowIndex === rowIndex)
+        if (next){
+            updateRows.push(Object.assign({}, next.data, {current: true}))
+        }
+        
+        gridApiRef.current.applyTransaction({
+            update: updateRows
+        })
+        gridApiRef.current.ensureIndexVisible(next.rowIndex, "bottom")
     }
     const handleFilter = (data) => {
         console.log("handleFilter", data)
     }
     useEffect(() => {
- 	setTimeout(() => {
+ 	    setTimeout(() => {
 	    const _rowData = genRowData()
             setRowData(_rowData)
             const _columns = Object.keys(_rowData[0]).map((item, index) => {
@@ -76,6 +109,32 @@ const AgTable = () => {
            console.log("columns", _columns)
         }, 1000)
 
+        const handleKeyup = (e) => {
+            if (e.key == "ArrowUp"){
+                console.log("arrow up")
+                const currentRow = getCurrentRowNode()
+                if (!currentRow){
+                    setCurrentRowNode(0)
+                } else {
+                    setCurrentRowNode(currentRow.rowIndex - 1)
+                }
+
+            } else if (e.key == "ArrowDown"){
+                console.log("arrow down")
+                const currentRow = getCurrentRowNode()
+                if (!currentRow){
+                    setCurrentRowNode(0)
+                } else {
+                    setCurrentRowNode(currentRow.rowIndex + 1)
+                }
+            }
+        }
+
+        document.addEventListener("keyup", handleKeyup)
+        return () => {
+            document.removeEventListener("keyup", handleKeyup)
+        }
+
     }, [])
     return (
       <>
@@ -83,6 +142,9 @@ const AgTable = () => {
           <div ref={eleRef} className="ag-theme-balham" style={{height: 500}}>
           <AgGridReact
              rowData={rowData}
+             getRowNodeId={(data) => data.uid}
+             rowClassRules={{"ag-row-current": (row) => row.data.current}}
+             onRowDataUpdated={onRowDataUpdated}
              enableCellTextSelection={true}
              rowSelection={"multiple"}
              onCellClicked={onCellClicked}
@@ -91,6 +153,7 @@ const AgTable = () => {
              suppressCellSelection={true}
              suppressRowClickSelection={true}
              columnDefs={columnDefs}
+             suppressKeyboardEvent={(e) => {e.event.preventDefault(); return true}}
              preventDefaultOnContextMenu={true}
              suppressMenuHide={true}
              suppressRowClickSelection={true}
