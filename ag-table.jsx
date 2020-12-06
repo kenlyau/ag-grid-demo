@@ -27,15 +27,18 @@ const AgTable = () => {
     const gridColumnApiRef = useRef()
     const eleRef = useRef()
     const onCellClicked = (e) => {
-	e.event.preventDefault()
-        e.event.stopPropagation()
+        if (window.getSelection().toString()){
+            //如果有内容，说明是在选择文本，不触发切换当前行事件
+            console.log(window.getSelection().toString())
+        } else {
+            setCurrentRowNode(e.rowIndex)
+        }
+
     }
-    const onCellMouseDown = (e) => {
-        console.log(e)
+    const onCellContextMenu  = (e) => {
+        alert("cell contextmenu")
     }
-    const onRowDataUpdated = (row, a, b) => {
-        console.log(row, a, b)
-    }
+
     const onGridReady = (params) => {
          window.agApi = params.api
          window.agColumnApi = params.columnApi
@@ -60,6 +63,10 @@ const AgTable = () => {
         const rows = getAllRowNode()
         const updateRows = []
         const current = rows.find(item => item.data.current)
+        if (rowIndex < 0 || rowIndex >= rows.length){
+            //超出数据范围，不切换
+            return
+        }
         if (current) {
             updateRows.push(Object.assign({}, current.data, {current: false}))
         }
@@ -71,7 +78,8 @@ const AgTable = () => {
         gridApiRef.current.applyTransaction({
             update: updateRows
         })
-        gridApiRef.current.ensureIndexVisible(next.rowIndex, "bottom")
+        gridApiRef.current.ensureIndexVisible(next.rowIndex)
+        console.log("切换当前行", next)
     }
     const handleFilter = (data) => {
         console.log("handleFilter", data)
@@ -144,11 +152,10 @@ const AgTable = () => {
              rowData={rowData}
              getRowNodeId={(data) => data.uid}
              rowClassRules={{"ag-row-current": (row) => row.data.current}}
-             onRowDataUpdated={onRowDataUpdated}
              enableCellTextSelection={true}
              rowSelection={"multiple"}
              onCellClicked={onCellClicked}
-             onCellMouseDown={onCellMouseDown}
+             onCellContextMenu={onCellContextMenu}
              onGridReady={onGridReady}
              suppressCellSelection={true}
              suppressRowClickSelection={true}
