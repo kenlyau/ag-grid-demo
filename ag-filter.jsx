@@ -1,13 +1,15 @@
-import React, { forwardRef, useImperativeHandle, useState, useEffect} from "react"
+import React, { forwardRef, useImperativeHandle, useState, useEffect, useRef} from "react"
 import {v4 as uuidv4} from "uuid"
 
 const genData = () => {
     const len = Math.ceil(Math.random() * 30)
-    return Array(len).fill(1).map(() => ({id: uuidv4(), name: uuidv4()}))
+    const r = Array(len).fill(1).map(() => ({id: uuidv4(), name: uuidv4()}))
+    return [{id: "a", name: "a"},{id: "b", name: "b"},{id: "c", name: "c"},{id: "d", name: "d"}, ...r]
 }
 const AgFilter = forwardRef((props, ref) => {
     const [data, setData] = useState([])
     const [checkeds, setCheckeds] = useState([])
+    const hidePopRef = useRef()
 
     const updateChecked = (e) => {
         if (e.target.checked){
@@ -19,18 +21,33 @@ const AgFilter = forwardRef((props, ref) => {
         }
     }
     const handler = () => {
+        console.log(props)
+        props.filterChangedCallback()
+        hidePopRef.current && hidePopRef.current()
         props.onChange(checkeds)
     }
     useEffect(() => {
         console.log("agFilter init")
         //setData(genData())
+        return () => {
+            hidePopRef.current = null
+            console.log("agFilter destroy")
+        }
     }, [])
 
     useImperativeHandle(ref, () => {
         return {
+            isFilterActive: () => {
+                return !!checkeds.length
+            },
+            doesFilterPass: () => {
+                return true
+            },
             afterGuiAttached: (params) => {
-                setCheckeds([])
-                console.log("agFilter afterGuiAttached")
+                //setCheckeds([])
+                hidePopRef.current = params.hidePopup
+                console.log("agFilter afterGuiAttached", params)
+
                 setData(genData())
             }
         }

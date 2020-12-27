@@ -13,8 +13,8 @@
     "ag-grid-community": "^24.1.0",
     "ag-grid-react": "^24.1.1",
     "app": "^0.1.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "uuid": "^8.3.1"
+    "react": "^16.3.0",
+    "react-dom": "^16.3.0",
+    "uuid": "^8.3.2"
   }
 }
