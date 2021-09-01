@@ -7,7 +7,7 @@ import AgChkbox from "./ag-chkbox"
 import AgFilter from "./ag-filter"
 
 const genRowData = () => {
-    const cols = Array(55).fill(1).map(i => uuidv4())
+    const cols = Array(25).fill(1).map((_, i) => String.fromCharCode(65 +i))
     const rows = Array(500).fill(1).map(i => {
          const obj = {
             uid: uuidv4()

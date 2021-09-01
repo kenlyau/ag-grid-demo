@@ -1,10 +1,13 @@
 import React, { forwardRef, useImperativeHandle, useState, useEffect, useRef} from "react"
-import {v4 as uuidv4} from "uuid"
+
 
 const genData = () => {
-    const len = Math.ceil(Math.random() * 30)
-    const r = Array(len).fill(1).map(() => ({id: uuidv4(), name: uuidv4()}))
-    return [{id: "a", name: "a"},{id: "b", name: "b"},{id: "c", name: "c"},{id: "d", name: "d"}, ...r]
+    return Array(25).fill(1).map((_, i) => {
+        return {
+            id: String.fromCharCode(65 + i),
+            name: String.fromCharCode(65 + i)
+        }
+    })
 }
 const AgFilter = forwardRef((props, ref) => {
     const [data, setData] = useState([])
