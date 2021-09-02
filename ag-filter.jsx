@@ -9,11 +9,10 @@ const genData = () => {
         }
     })
 }
-const AgFilter = forwardRef((props, ref) => {
+const AgFilter = forwardRef(({column, onChange, params, filterChangedCallback}, ref) => {
     const [data, setData] = useState([])
     const [checkeds, setCheckeds] = useState([])
     const hidePopRef = useRef()
-
     const updateChecked = (e) => {
         if (e.target.checked){
             const _checkeds = Array.from(new Set([...checkeds, e.target.value]))
@@ -24,10 +23,9 @@ const AgFilter = forwardRef((props, ref) => {
         }
     }
     const handler = () => {
-        console.log(props)
-        props.filterChangedCallback()
+        filterChangedCallback()
         hidePopRef.current && hidePopRef.current()
-        props.onChange(checkeds)
+        onChange(checkeds, column.colId)
     }
     useEffect(() => {
         console.log("agFilter init")
@@ -37,7 +35,7 @@ const AgFilter = forwardRef((props, ref) => {
             console.log("agFilter destroy")
         }
     }, [])
-
+    console.log("filter params change:", column.colId, params)
     useImperativeHandle(ref, () => {
         return {
             isFilterActive: () => {
@@ -52,6 +50,11 @@ const AgFilter = forwardRef((props, ref) => {
                 console.log("agFilter afterGuiAttached", params)
 
                 setData(genData())
+            },
+            reset: () => {
+                console.log("reset", column.colId)
+                setCheckeds([])
+                filterChangedCallback()
             }
         }
     })

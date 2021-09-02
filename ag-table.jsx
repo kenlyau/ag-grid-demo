@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useImperativeHandle} from "react"
+import React, {useState, useEffect, useRef, useImperativeHandle, useMemo} from "react"
 import {v4 as uuidv4, v5 as uuidv5} from "uuid"
 import {AgGridReact} from "ag-grid-react"
 import "ag-grid-community/dist/styles/ag-grid.css"
@@ -22,7 +22,8 @@ const genRowData = () => {
 const AgTable = () => {
     const [rowData, setRowData] = useState([])
     const [columnDefs, setColumnDefs] = useState([])
-    
+    const [filterParams, setFilterParams] = useState({})
+
     const gridApiRef = useRef()
     const gridColumnApiRef = useRef()
     const eleRef = useRef()
@@ -81,40 +82,58 @@ const AgTable = () => {
         gridApiRef.current.ensureIndexVisible(next.rowIndex)
         console.log("切换当前行", next)
     }
-    const handleFilter = (data) => {
-        console.log("handleFilter", data)
+    const handleFilter = (data, colId) => {
+        console.log("handleFilter", data, colId)
+        setFilterParams(Object.assign({}, filterParams, {[colId]: data}))
     }
+
+    const resetColumnFilterParams = (colId) => {
+        setFilterParams(Object.assign({}, filterParams, {[colId]: []}))
+        gridApiRef.current.getFilterInstance(colId, (instance) => {
+            instance.getFrameworkComponentInstance().reset()
+        })
+    }
+    const rowDataFinal = useMemo(() => {
+        let _rowData = rowData
+        Object.keys(filterParams).forEach(k => {
+            _rowData = _rowData.filter(i => new RegExp(filterParams[k].map(j => j.toLowerCase()).join("|")).test(i[k]))
+        })
+        return _rowData
+    }, [rowData, filterParams])
+    useEffect(() => {
+        if (!rowData[0]){
+            return
+        }
+        const _columns = Object.keys(rowData[0]).map((item, index) => {
+            const _column = {
+              field: item,
+              resizable: true,
+              sortable: true,
+            }
+            if (index % 2){
+                _column.filterFramework = AgFilter
+                _column.filterParams = {params: filterParams, onChange: handleFilter}
+            }
+            if (index % 3) {
+                _column.unSortIcon = true
+            }
+            return _column
+        })
+        const chkCol = {
+            field: "checkbox",
+            headerName: "",
+            cellClass: "mykk",
+            headerCheckboxSelection: true,
+            checkboxSelection: true,
+            cellRendererFramework: AgChkbox, 
+       }
+       setColumnDefs([chkCol,..._columns])
+       console.log("columns", _columns)
+    }, [rowData, filterParams])
     useEffect(() => {
  	    setTimeout(() => {
-	    const _rowData = genRowData()
+	        const _rowData = genRowData()
             setRowData(_rowData)
-            const _columns = Object.keys(_rowData[0]).map((item, index) => {
-                const _column = {
-                  field: item,
-                  resizable: true,
-                  sortable: true,
-                }
-                if (index % 2){
-                    _column.filterFramework = AgFilter
-                    _column.filterParams = {onChange: handleFilter}
-                }
-                if (index % 3) {
-                    _column.unSortIcon = true
-                }
-                console.log(_column)
-                return _column
-            })
-            const chkCol = {
-                field: "checkbox",
-                headerName: "",
-                cellClass: "mykk",
-                headerCheckboxSelection: true,
-                checkboxSelection: true,
-                cellRendererFramework: AgChkbox, 
-           }
-           setColumnDefs([chkCol,..._columns])
-           console.log("rowdata", _rowData)
-           console.log("columns", _columns)
         }, 1000)
 
         const handleKeyup = (e) => {
@@ -147,9 +166,11 @@ const AgTable = () => {
     return (
       <>
           <h2>ag-table</h2>
+          <button onClick={() => resetColumnFilterParams("A")}>重置A</button>&nbsp;
+          <button onClick={() => resetColumnFilterParams("C")}>重置C</button>
           <div ref={eleRef} className="ag-theme-balham" style={{height: 500}}>
           <AgGridReact
-             rowData={rowData}
+             rowData={rowDataFinal}
              getRowNodeId={(data) => data.uid}
              rowClassRules={{"ag-row-current": (row) => row.data.current}}
              enableCellTextSelection={true}
